@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Casino</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: #101116;
+            color: white;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            font-size: 23px;
+            font-weight: bold;
+            color: #ffc857;
+        }
+
+        .balance {
+            background: #20222d;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: #ffc857;
+            font-weight: bold;
+        }
+
+        .welcome {
+            background: linear-gradient(135deg, #5b32c4, #a43bd0);
+            padding: 25px;
+            border-radius: 18px;
+            margin-bottom: 25px;
+        }
+
+        .welcome h1 {
+            font-size: 25px;
+            margin-bottom: 10px;
+        }
+
+        .welcome p {
+            color: #e4dafa;
+            font-size: 14px;
+        }
+
+        .section-title {
+            margin: 25px 0 15px;
+            font-size: 19px;
+        }
+
+        .games {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .game {
+            background: #20222d;
+            border: 1px solid #303342;
+            border-radius: 16px;
+            padding: 20px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .game:active {
+            transform: scale(0.96);
+        }
+
+        .game-icon {
+            font-size: 38px;
+            margin-bottom: 10px;
+        }
+
+        .game-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .game-description {
+            color: #9295a5;
+            font-size: 12px;
+        }
+
+        .slot-box {
+            display: none;
+            margin-top: 25px;
+            background: #20222d;
+            padding: 20px;
+            border-radius: 18px;
+            text-align: center;
+        }
+
+        .slot-machine {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 25px 0;
+        }
+
+        .reel {
+            background: #101116;
+            border: 2px solid #ffc857;
+            border-radius: 12px;
+            width: 75px;
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            background: #ffc857;
+            color: #171717;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 15px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+        }
+
+        #result {
+            margin: 15px 0;
+            color: #ffc857;
+            min-height: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #656879;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    <div class="logo">🎰 LUCKY CASINO</div>
+    <div class="balance">💰 <span id="balance">1000</span></div>
+</div>
+
+<div class="welcome">
+    <h1>Добро пожаловать!</h1>
+    <p>Испытай удачу в наших играх.</p>
+</div>
+
+<h2 class="section-title">🎮 Игры</h2>
+
+<div class="games">
+    <div class="game" onclick="openSlots()">
+        <div class="game-icon">🎰</div>
+        <div class="game-name">Слоты</div>
+        <div class="game-description">Игровые автоматы</div>
+    </div>
+
+    <div class="game" onclick="showComingSoon('Рулетка')">
+        <div class="game-icon">🎡</div>
+        <div class="game-name">Рулетка</div>
+        <div class="game-description">Скоро появится</div>
+    </div>
+
+    <div class="game" onclick="showComingSoon('Blackjack')">
+        <div class="game-icon">🃏</div>
+        <div class="game-name">Blackjack</div>
+        <div class="game-description">Скоро появится</div>
+    </div>
+
+    <div class="game" onclick="showComingSoon('Dice')">
+        <div class="game-icon">🎲</div>
+        <div class="game-name">Dice</div>
+        <div class="game-description">Скоро появится</div>
+    </div>
+</div>
+
+<div class="slot-box" id="slots">
+    <h2>🎰 Slot Machine</h2>
+
+    <div class="slot-machine">
+        <div class="reel" id="reel1">🍒</div>
+        <div class="reel" id="reel2">🍋</div>
+        <div class="reel" id="reel3">🍇</div>
+    </div>
+
+    <p>Стоимость игры: 10 виртуальных монет</p>
+
+    <div id="result"></div>
+
+    <button id="spinButton" onclick="spin()">КРУТИТЬ</button>
+</div>
+
+<div class="footer">
+    LUCKY CASINO · DEMO VERSION
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+
+    tg.ready();
+    tg.expand();
+
+    const symbols = ["🍒", "🍋", "🍇", "🍉", "⭐", "7️⃣"];
+    let balance = 1000;
+
+    function openSlots() {
+        document.getElementById("slots").style.display = "block";
+        document.getElementById("slots").scrollIntoView({
+            behavior: "smooth"
+        });
+    }
+
+    function showComingSoon(name) {
+        tg.showAlert(name + " скоро появится!");
+    }
+
+    function spin() {
+        if (balance < 10) {
+            tg.showAlert("Недостаточно виртуальных монет!");
+            return;
+        }
+
+        const button = document.getElementById("spinButton");
+        button.disabled = true;
+
+        balance -= 10;
+        updateBalance();
+
+        const reels = [
+            document.getElementById("reel1"),
+            document.getElementById("reel2"),
+            document.getElementById("reel3")
+        ];
+
+        let count = 0;
+
+        const animation = setInterval(() => {
+            reels.forEach(reel => {
+                reel.textContent =
+                    symbols[Math.floor(Math.random() * symbols.length)];
+            });
+
+            count++;
+
+            if (count >= 12) {
+                clearInterval(animation);
+
+                const result = reels.map(reel => reel.textContent);
+
+                if (result[0] === result[1] &&
+                    result[1] === result[2]) {
+                    balance += 100;
+                    document.getElementById("result").textContent =
+                        "🎉 Джекпот! +100 виртуальных монет!";
+                } else {
+                    document.getElementById("result").textContent =
+                        "Попробуй ещё раз!";
+                }
+
+                updateBalance();
+                button.disabled = false;
+            }
+        }, 100);
+    }
+
+    function updateBalance() {
+        document.getElementById("balance").textContent = balance;
+    }
+</script>
+
+</body>
+</html>
